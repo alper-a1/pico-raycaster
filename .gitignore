@@ -1,0 +1,3 @@
+build
+!.vscode/*
+code_conventions.md
