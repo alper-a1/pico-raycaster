@@ -50,6 +50,13 @@ int main()
     ST7735 tft(1, spi0, 18, 19, 17, 21, 20, 255);
     tft.initialize(ST7735::TFT_Type::GREEN_TAB);
 
+    // validate texture data
+    if (!TextureManager::isValid()) {
+        printf("ERROR Texture data invalid!\n");
+        tft.drawFillScreen(0xF800); // red screen
+
+        while (true) tight_loop_contents(); // halt
+    }
 
     // int worldMap[24][24]=
     // {
@@ -210,7 +217,9 @@ int main()
 
         // pointer to the column of the texture we are sampling from
         // since textures are stored column major for cache efficiency
-        const uint16_t* tex_column = &texture_map[tex_num][tex_x_coord * TEX_SIZE];
+        // const uint16_t* tex_column = &texture_map[tex_num][tex_x_coord * TEX_SIZE];
+        const uint16_t* tex_data_start = TextureManager::getTextureData(tex_num);
+        const uint16_t* tex_column = &tex_data_start[tex_x_coord * TEX_SIZE];
 
         for (size_t y = draw_start; y < draw_end; y++) {
             int16_t tex_y_coord = tex_pos.toInt() & TEX_MASK;
@@ -220,10 +229,10 @@ int main()
             uint16_t color = tex_column[tex_y_coord];
             
             // make y-sides darker CHANGE THIS TO MAKE IT SO THAT TEXTURES THAT ARE DARKER ARE JUST A DIFFERENT TEXTURE
-            if (side == 1) {
+            // if (side == 1) {
                 // simple bitmasking to darken color (5-6-5 format)
                 // color = (color >> 1) & 0x39EF;
-            }
+            // }
 
             ray_column[y] = color;
         }

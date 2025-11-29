@@ -1,4 +1,4 @@
-# Generated Cmake Pico project file
+# Originally Generated Cmake Pico project file
 
 cmake_minimum_required(VERSION 3.13)
 
@@ -55,9 +55,15 @@ target_include_directories(FIXED_POINT_LIB PUBLIC lib/fixed_point/include)
 target_link_libraries(FIXED_POINT_LIB pico_stdlib)
 # ------------------------
 
-# Add executable. Default name is the project name, version 0.1
+# Add executable
 
-add_executable(pico-raycaster pico-raycaster.cpp)
+add_executable(pico-raycaster)
+
+target_sources(pico-raycaster PRIVATE 
+        pico-raycaster.cpp
+        tools/textures.S
+) 
+
 
 pico_set_program_name(pico-raycaster "pico-raycaster")
 pico_set_program_version(pico-raycaster "0.1")
@@ -73,6 +79,7 @@ target_link_libraries(pico-raycaster
 # Add the standard include files to the build
 target_include_directories(pico-raycaster PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/include
+        ${CMAKE_CURRENT_LIST_DIR}/assets # this is only for the textures.S really
 )
 
 # Add any user requested libraries
