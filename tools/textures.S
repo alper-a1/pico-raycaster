@@ -4,7 +4,7 @@
 .section .rodata
 
 /* Need alignment for uint32 and efficiency of pico flash accessing */
-.align 4
+.balign 4
 
 /* C++ symbol */
 .global textures_xip_blob

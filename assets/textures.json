@@ -1,0 +1,86 @@
+{
+    "version": 100001,
+    "texture_count": 16,
+    "textures": [
+        {
+            "id": 0,
+            "name": "tex_xor",
+            "rcolor": "0x8210"
+        },
+        {
+            "id": 1,
+            "name": "tex_xor_shaded",
+            "rcolor": "0x4108"
+        },
+        {
+            "id": 2,
+            "name": "tex_gradient",
+            "rcolor": "0x78d0"
+        },
+        {
+            "id": 3,
+            "name": "tex_gradient_shaded",
+            "rcolor": "0x4068"
+        },
+        {
+            "id": 4,
+            "name": "tex_checkers",
+            "rcolor": "0x83f0"
+        },
+        {
+            "id": 5,
+            "name": "tex_checkers_shaded",
+            "rcolor": "0x4208"
+        },
+        {
+            "id": 6,
+            "name": "tex_bricks",
+            "rcolor": "0x9185"
+        },
+        {
+            "id": 7,
+            "name": "tex_bricks_shaded",
+            "rcolor": "0x48c2"
+        },
+        {
+            "id": 8,
+            "name": "tex_stone_bricks",
+            "rcolor": "0x52ab"
+        },
+        {
+            "id": 9,
+            "name": "tex_stone_bricks_shaded",
+            "rcolor": "0x2966"
+        },
+        {
+            "id": 10,
+            "name": "tex_symbol_wall",
+            "rcolor": "0x49e6"
+        },
+        {
+            "id": 11,
+            "name": "tex_symbol_wall_shaded",
+            "rcolor": "0x2103"
+        },
+        {
+            "id": 12,
+            "name": "tex_wood",
+            "rcolor": "0x82e5"
+        },
+        {
+            "id": 13,
+            "name": "tex_wood_shaded",
+            "rcolor": "0x4182"
+        },
+        {
+            "id": 14,
+            "name": "tex_vent",
+            "rcolor": "0x6b6e"
+        },
+        {
+            "id": 15,
+            "name": "tex_vent_shaded",
+            "rcolor": "0x39c7"
+        }
+    ]
+}

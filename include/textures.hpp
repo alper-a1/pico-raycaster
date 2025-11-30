@@ -9,8 +9,6 @@
 
 #include "fixed_point.hpp"
 
-// #include "raw_textures.hpp" // auto-generated texture data OLD
-
 // texture based constants
 
 
