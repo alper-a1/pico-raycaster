@@ -23,6 +23,7 @@ MAPDATA:
 
 import struct
 from pathlib import Path
+import logging
 
 from map_data import PlayerData, MapData
 
@@ -32,25 +33,28 @@ MAP_MAGIC_BYTES = 0x4D415030
 
 
 def export_map_to_xip(filename: Path, player_data: PlayerData, map_data: MapData):
-    with open(filename, "wb") as f:   
-        # Write header
-        f.write(MAP_MAGIC)  # MAGIC
-        f.write(struct.pack('<I', MAP_VERSION))  # VERSION
-        
-        playerdata_offset = 20  # after header
-        mapdata_offset = playerdata_offset + 16  # after player data
-        
-        f.write(struct.pack('<I', playerdata_offset))  # PLAYERDATA OFFSET
-        f.write(struct.pack('<I', mapdata_offset))  # MAPDATA OFFSET
-        f.write(b'\x00' * 4)  # RESERVED
-        
-        # Write player data
-        f.write(struct.pack('<i', player_data.start_x))
-        f.write(struct.pack('<i', player_data.start_y))
-        f.write(struct.pack('<i', player_data.start_angle_x))
-        f.write(struct.pack('<i', player_data.start_angle_y))
-        
-        # Write map data
-        f.write(struct.pack('<B', map_data.width))
-        f.write(struct.pack('<B', map_data.height))
-        f.write(struct.pack("<" + "B" * (map_data.width * map_data.height), *map_data.tiles))
+    try:
+        with open(filename, "wb") as f:   
+            # Write header
+            f.write(MAP_MAGIC)  # MAGIC
+            f.write(struct.pack('<I', MAP_VERSION))  # VERSION
+            
+            playerdata_offset = 20  # after header
+            mapdata_offset = playerdata_offset + 16  # after player data
+            
+            f.write(struct.pack('<I', playerdata_offset))  # PLAYERDATA OFFSET
+            f.write(struct.pack('<I', mapdata_offset))  # MAPDATA OFFSET
+            f.write(b'\x00' * 4)  # RESERVED
+            
+            # Write player data
+            f.write(struct.pack('<i', player_data.start_x))
+            f.write(struct.pack('<i', player_data.start_y))
+            f.write(struct.pack('<i', player_data.start_angle_x))
+            f.write(struct.pack('<i', player_data.start_angle_y))
+            
+            # Write map data
+            f.write(struct.pack('<B', map_data.width))
+            f.write(struct.pack('<B', map_data.height))
+            f.write(struct.pack("<" + "B" * (map_data.width * map_data.height), *map_data.tiles))
+    except Exception as e:
+        logging.error(f"Error exporting map to {filename}: {e}")
