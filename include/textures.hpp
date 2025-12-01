@@ -27,9 +27,10 @@ struct TextureFileHeader {
 };
 
 extern "C" {
-    // defined in tools/textures.S
+    // defined in assets_bin/textures.S
     // kept as byte array for pointer math
     extern const uint8_t textures_xip_blob[]; 
+    extern const uint8_t textures_xip_blob_end[];
 }
 
 /**

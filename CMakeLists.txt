@@ -59,10 +59,9 @@ target_link_libraries(FIXED_POINT_LIB pico_stdlib)
 
 add_executable(pico-raycaster)
 
-target_sources(pico-raycaster PRIVATE 
-        pico-raycaster.cpp
-        tools/textures.S
-) 
+file(GLOB PICO_RAYCASTER_SOURCES CONFIGURE_DEPENDS "src/*.cpp" "assets_bin/*.S")
+
+target_sources(pico-raycaster PRIVATE ${PICO_RAYCASTER_SOURCES})  
 
 
 pico_set_program_name(pico-raycaster "pico-raycaster")

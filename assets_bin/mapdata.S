@@ -1,5 +1,5 @@
-/* assets_bin/textures.S */
-/* Helper file for texture xip linking */
+/* assets_bin/mapdata.S */
+/* Helper file for mapdata xip linking */
 
 .section .rodata
 
@@ -7,10 +7,10 @@
 .balign 4
 
 /* C++ symbol */
-.global textures_xip_blob
-.global textures_xip_blob_end
+.global mapdata_xip_blob
+.global mapdata_xip_blob_end
 
 textures_xip_blob:
     /* Note: Path must be relative to where the compiler searches */
-    .incbin "textures.xip"
+    .incbin "mapdata.xip"
 textures_xip_blob_end:
