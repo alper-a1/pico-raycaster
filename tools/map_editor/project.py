@@ -3,7 +3,7 @@ from pathlib import Path
 import logging
 
 from map_data import *
-from xip_writer import export_map_to_xip
+from xip_utils import export_map_to_xip
 
 class Project(QObject):
     map_changed = Signal()
@@ -61,20 +61,24 @@ class Project(QObject):
         self.dirty = True
         self.map_changed.emit()
         
-        logging.info(f"Set tile at {x}, {y} to {tile_id}")
-        
-    def set_player_start_pos(self, start_x: int, start_y: int):
+    def set_player_start_pos(self, start_x: int, start_y: int) -> None:
         """
         Set player start position in FixedPoint15_16 format.
+        
+        @param start_x: FixedPoint15_16 x coordinate of player start position
+        @param start_y: FixedPoint15_16 y coordinate of player start position
         """
         self.player.start_x = start_x
         self.player.start_y = start_y
     
         self.dirty = True
         
-    def set_player_start_angle(self, start_angle_x: int, start_angle_y: int):
+    def set_player_start_angle(self, start_angle_x: int, start_angle_y: int) -> None:
         """
         Set player start angle in FixedPoint15_16 format.
+        
+        @param start_angle_x: FixedPoint15_16 x component of direction vector
+        @param start_angle_y: FixedPoint15_16 y component of direction vector
         """
         
         self.player.start_angle_x = start_angle_x

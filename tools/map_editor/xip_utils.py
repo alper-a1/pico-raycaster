@@ -23,6 +23,7 @@ MAPDATA:
 
 import struct
 from pathlib import Path
+from typing import Tuple
 import logging
 
 from map_data import PlayerData, MapData
@@ -31,8 +32,17 @@ MAP_VERSION = 100000 # version 1.0.00
 MAP_MAGIC = b'MAP0'
 MAP_MAGIC_BYTES = 0x4D415030
 
-
-def export_map_to_xip(filename: Path, player_data: PlayerData, map_data: MapData):
+def export_map_to_xip(filename: Path, player_data: PlayerData, map_data: MapData) -> Tuple[bool, str]:
+    """
+    Export the given player and map data to a .xip file. \n
+    !-- The caller is responsible for ensuring the data is valid --!
+    
+    @param filename: Path to output .xip file
+    @param player_data: PlayerData object containing player start info
+    @param map_data: MapData object containing map layout info
+    
+    @return: Tuple (success: bool, error_message: str)
+    """
     try:
         with open(filename, "wb") as f:   
             # Write header
@@ -56,5 +66,24 @@ def export_map_to_xip(filename: Path, player_data: PlayerData, map_data: MapData
             f.write(struct.pack('<B', map_data.width))
             f.write(struct.pack('<B', map_data.height))
             f.write(struct.pack("<" + "B" * (map_data.width * map_data.height), *map_data.tiles))
+            
+        return True, ""
     except Exception as e:
         logging.error(f"Error exporting map to {filename}: {e}")
+        return False, str(e)
+        
+def import_map_from_xip(filename: Path, project_ref) -> Tuple[bool, str]:
+    """
+    Import map and player data from a .xip file into the given project reference.
+    OVERWRITES existing map and player data in the project. \n
+    !-- The caller is responsible for validating the file path before calling this function --!
+    
+    @param filename: Path to input .xip file
+    @param project_ref: Reference to the project object to load data into
+    
+    @return: Tuple (success: bool, error_message: str)
+    """
+    
+    # open, check magic, read header, read data sections, populate project_ref
+    
+    return False, "Import not yet implemented"

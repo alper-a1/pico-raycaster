@@ -1,5 +1,5 @@
 import logging
-from pathlib import Path
+import math
 from typing import Dict, Any
 
 from PySide6 import QtCore, QtGui
@@ -11,7 +11,9 @@ from PySide6.QtWidgets import (QLabel, QCheckBox, QPushButton, QSlider,
                                QButtonGroup)
 
 from project import Project # only for type hinting, no direct usage
+from map_data import *
 from texture_manager import TextureManager
+from fixed_point import ConversionHelpers
 
 class TileListManagerWidget(QWidget):
     tile_selected = Signal(int)  # tile_id
@@ -99,6 +101,7 @@ class TileListManagerWidget(QWidget):
 
 class MapCanvasWidget(QWidget):
     tile_drawn = Signal(int, int, int)  # x, y, tile_id
+    player_spawn_set = Signal(int, int)  # x_fp, y_fp in FixedPoint15_16
     
     def __init__(self, texture_manager: TextureManager, tile_draw_size: int = 16):
         super().__init__()
@@ -109,12 +112,16 @@ class MapCanvasWidget(QWidget):
         
         self._project: Project | None = None
         
-        self._selected_tile_id: int = 0
+        self._selected_tile_id: int = 1
         
         # state for drag/continuous paint
         self._mouse_down = False
         self._last_emitted_tile: tuple[int, int] = (-1, -1)
         self._last_emitted_tile_id: int = -1
+        
+        # mode selector for placing player spawn
+        self._spawn_place_mode = False
+        self._spawn_indicator_pos: QtCore.QPoint | None = None
     
     @property
     def selected_tile_id(self) -> int:
@@ -134,6 +141,19 @@ class MapCanvasWidget(QWidget):
         Signal compatible wrapper
         """
         self.selected_tile_id = value
+    
+    @QtCore.Slot(bool)
+    def set_player_place_mode(self, enabled: bool):
+        """
+        Signal compatible wrapper
+        """
+        self._spawn_place_mode = enabled
+        
+        self.setMouseTracking(enabled)
+        if not enabled:
+            self._spawn_indicator_pos = None
+        
+        self.repaint()
     
     def set_project(self, project: Project):
         self._project = project
@@ -172,6 +192,7 @@ class MapCanvasWidget(QWidget):
         # to get the color of the texture to draw
         textures = self._texture_manager.get_textures()
         
+        # texture grid (representitive color)
         painter.setPen(pen)
         for x in range(self._project.map.width):
             for y in range(self._project.map.height):
@@ -188,6 +209,7 @@ class MapCanvasWidget(QWidget):
                 painter.fillRect(text_rect, QtGui.QBrush(QtGui.QColor(color)))
         
         
+        # grid lines
         pen.setColor(Qt.GlobalColor.darkGray)
         painter.setPen(pen)
         
@@ -201,12 +223,82 @@ class MapCanvasWidget(QWidget):
             py = gy * self._tile_draw_size
             painter.drawLine(0, py, self._project.map.width * self._tile_draw_size, py)
         
+        # draw player start position
+        brush.setColor(Qt.GlobalColor.red)
+        pen.setColor(Qt.GlobalColor.red)
+        painter.setBrush(brush)
+        painter.setPen(pen)
+
+        p = self._project.player
         
+        if p is not None:
+            if p.start_x != UNSET_FLAG and p.start_y != UNSET_FLAG:
+                px_f = ConversionHelpers.fixedpoint_to_float(p.start_x) 
+                py_f = ConversionHelpers.fixedpoint_to_float(p.start_y) 
+                
+                # tile coords to grid pixel coords
+                x = math.floor(px_f) * self._tile_draw_size 
+                y = math.floor(py_f) * self._tile_draw_size
+                
+                x_offset = int((px_f - math.floor(px_f)) * self._tile_draw_size)
+                y_offset = int((py_f - math.floor(py_f)) * self._tile_draw_size)
+                
+                x += x_offset
+                y += y_offset
+                
+                marker_rad = self._tile_draw_size // 3
+                
+                painter.drawEllipse(QtCore.QPoint(x, y), marker_rad, marker_rad)
+                
+                # draw direction arrow
+                if p.start_angle_x != UNSET_FLAG and p.start_angle_y != UNSET_FLAG:
+                    cx = x
+                    cy = y
+                    
+                    # grab stored direction [-1,1] in fp and convert to float
+                    angle_px = ConversionHelpers.fixedpoint_to_float(p.start_angle_x) 
+                    angle_py = ConversionHelpers.fixedpoint_to_float(p.start_angle_y)
+                    
+                    arrow_end_x = cx + int(angle_px * marker_rad * 3)
+                    arrow_end_y = cy + int(angle_py * marker_rad * 3)
+
+                    pen.setWidth(2)
+                    painter.setPen(pen)
+                    
+                    painter.drawLine(cx, cy, arrow_end_x, arrow_end_y)
+        
+        if self._spawn_place_mode:
+            # overlay semi-transparent spawn circle for indicator
+            color = "#FF000075"  # red with alpha
+            brush.setColor(color)
+            painter.setBrush(brush)
+            if self._spawn_indicator_pos is not None:
+                marker_rad = self._tile_draw_size // 3
+                painter.drawEllipse(self._spawn_indicator_pos, marker_rad, marker_rad)
+                    
         return super().paintEvent(event)
     
     def mousePressEvent(self, ev: QtGui.QMouseEvent) -> None:
-        pos = ev.position().toPoint() if hasattr(ev, "position") else ev.pos()
+        if self._spawn_place_mode:
+            self.mouse_press_player_mode(ev)
+        else:
+            self.mouse_press_tile_mode(ev)
+        
+        return super().mousePressEvent(ev)
+    
+    def mouse_press_player_mode(self, ev: QtGui.QMouseEvent) -> None:
+        pos = ev.position().toPoint() 
 
+        if ev.button() == Qt.MouseButton.LeftButton:
+            self._mouse_down = True
+            x = pos.x() / self._tile_draw_size
+            y = pos.y() / self._tile_draw_size
+            
+            self._emit_player_spawn(x, y)
+    
+    def mouse_press_tile_mode(self, ev: QtGui.QMouseEvent) -> None:
+        pos = ev.position().toPoint() 
+        
         if ev.button() == Qt.MouseButton.LeftButton:
             self._mouse_down = True
             tx = pos.x() // self._tile_draw_size
@@ -218,13 +310,29 @@ class MapCanvasWidget(QWidget):
             ty = pos.y() // self._tile_draw_size
             self._emit_tile_if_changed(tx, ty, 0)
 
-        return super().mousePressEvent(ev)
-
     def mouseMoveEvent(self, ev: QtGui.QMouseEvent) -> None:
+        if self._spawn_place_mode:
+            self._spawn_indicator_pos = ev.position().toPoint()
+            self.repaint()
+        
         # Only act while mouse button is held (dragging); normal move events otherwise are ignored
         if not self._mouse_down:
             return super().mouseMoveEvent(ev)
 
+        if self._spawn_place_mode:
+            self.mouse_move_player_mode(ev)
+            self._spawn_indicator_pos = ev.position().toPoint()
+            self.repaint()
+        else:
+            self.mouse_move_tile_mode(ev)
+            self._spawn_indicator_pos = None
+
+        return super().mouseMoveEvent(ev)
+
+    def mouse_move_player_mode(self, ev: QtGui.QMouseEvent) -> None:
+        pass
+    
+    def mouse_move_tile_mode(self, ev: QtGui.QMouseEvent) -> None:
         pos = ev.position().toPoint()
         tx = pos.x() // self._tile_draw_size
         ty = pos.y() // self._tile_draw_size
@@ -234,26 +342,54 @@ class MapCanvasWidget(QWidget):
         if buttons & Qt.MouseButton.LeftButton:
             self._emit_tile_if_changed(tx, ty, self._selected_tile_id)
         elif buttons & Qt.MouseButton.RightButton:
-            self._emit_tile_if_changed(tx, ty, 0)
-
-        return super().mouseMoveEvent(ev)
+            self._emit_tile_if_changed(tx, ty, 0)        
 
     def mouseReleaseEvent(self, ev: QtGui.QMouseEvent) -> None:
         # stop drag/continuous mode and reset last-emitted state
         self._mouse_down = False
-        self._last_emitted_tile = (-1, -1)
-        self._last_emitted_tile_id = -1
+        
+        if not self._spawn_place_mode:
+            self._last_emitted_tile = (-1, -1)
+            self._last_emitted_tile_id = -1
+            
         return super().mouseReleaseEvent(ev)
 
     def _emit_tile_if_changed(self, tx: int, ty: int, tile_id: int) -> None:
         # bounds & dedupe checks to prevent spamming identical emits
         if self._project is None or self._project.map is None:
             return
+        
+        if self._spawn_place_mode:
+            # in player place mode, ignore tile drawing
+            return
+        
         if tx < 0 or ty < 0 or tx >= self._project.map.width or ty >= self._project.map.height:
             return
         if (tx, ty) == self._last_emitted_tile and tile_id == self._last_emitted_tile_id:
             return
         
+        # dont allow placement on the player starting tile/pos
+        if tx == ConversionHelpers.fixedpoint_to_int(self._project.player.start_x) and \
+           ty == ConversionHelpers.fixedpoint_to_int(self._project.player.start_y):
+            return
+        
         self.tile_drawn.emit(tx, ty, tile_id)
         self._last_emitted_tile = (tx, ty)
         self._last_emitted_tile_id = tile_id
+        
+        self.repaint()
+        
+    def _emit_player_spawn(self, x: float, y: float) -> None:
+        if self._project is None:
+            return
+        
+        if self._project.get_tile(int(x), int(y)) != 0:
+            # cant place player spawn on non-empty tile
+            return
+        
+        x_fp = ConversionHelpers.float_to_fixedpoint(x)
+        y_fp = ConversionHelpers.float_to_fixedpoint(y)
+        
+        self.player_spawn_set.emit(x_fp, y_fp)
+        
+        self.repaint()
