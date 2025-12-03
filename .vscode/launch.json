@@ -46,13 +46,5 @@
                 "load \"${command:raspberry-pi-pico.launchTargetPath}\""
             ]
         },
-        {
-            "name": "Python: Map Editor",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "${workspaceFolder}/tools/map_editor/main.py",
-            "console": "integratedTerminal", 
-            "env": {}
-        },
     ]
 }
