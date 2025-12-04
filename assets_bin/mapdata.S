@@ -7,10 +7,10 @@
 .balign 4
 
 /* C++ symbol */
-.global mapdata_xip_blob
-.global mapdata_xip_blob_end
+.global map_data_xip_blob
+.global map_data_xip_blob_end
 
-textures_xip_blob:
+map_data_xip_blob:
     /* Note: Path must be relative to where the compiler searches */
     .incbin "mapdata.xip"
-textures_xip_blob_end:
+map_data_xip_blob_end:

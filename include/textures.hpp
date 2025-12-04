@@ -18,7 +18,7 @@ inline constexpr Fixed15_16 TEX_SIZE_FP = Fixed15_16(TEX_SIZE);
 inline constexpr uint8_t TEX_MASK = TEX_SIZE - 1; // for wrapping
 
 struct TextureFileHeader {
-    inline static constexpr uint32_t VALID_MAGIC = 0x30504958;
+    inline static constexpr uint32_t VALID_MAGIC = 0x30504958; // 'XIP0' reversed for little endian
 
     uint32_t magic;
     uint32_t version;
