@@ -1,5 +1,5 @@
 build
-!.vscode/*
+.vscode
 code_conventions.md
 pico-raycaster.code-workspace
 TODO
